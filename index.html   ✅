@@ -3,204 +3,216 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Schusszähler App</title>
-
+<title>Schusszähler Mobile</title>
 <style>
 body {
-    font-family: Arial, Helvetica, sans-serif;
-    background: #f2f2f2;
-    margin: 0;
-    padding: 10px;
+    font-family: Calibri, Arial, sans-serif;
+    background:#f2f2f2;
+    margin:0;
+    padding:10px;
 }
-
 .container {
-    max-width: 420px;
-    margin: auto;
-    background: #ffffff;
-    padding: 16px;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    max-width:480px;
+    margin:auto;
+    background:white;
+    padding:15px;
+    border:1px solid #cfcfcf;
+    border-radius:8px;
 }
-
 h1 {
-    text-align: center;
-    margin-bottom: 10px;
+    text-align:center;
+    font-size:22px;
 }
-
 label {
-    font-weight: bold;
-    display: block;
-    margin-top: 12px;
+    font-weight:bold;
+    margin-top:10px;
+    display:block;
+    font-size:14px;
 }
-
-input, select, button {
-    width: 100%;
-    padding: 10px;
-    margin-top: 6px;
-    font-size: 16px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
+input, select {
+    width:100%;
+    padding:10px;
+    margin-top:4px;
+    font-size:16px;
+    border:1px solid #bfbfbf;
+    border-radius:6px;
 }
-
 button {
-    cursor: pointer;
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    font-size:16px;
+    border-radius:6px;
+    cursor:pointer;
 }
-
 .primary {
-    background: #0078d4;
-    color: white;
-    border: none;
+    background:#0078d4;
+    color:white;
+    border:none;
 }
-
 .secondary {
-    background: #eeeeee;
+    background:#eaeaea;
+    border:1px solid #bfbfbf;
 }
-
 .danger {
-    background: #c0392b;
-    color: white;
-    border: none;
+    background:#c0392b;
+    color:white;
+    border:none;
 }
-
 .total {
-    margin-top: 16px;
-    padding: 14px;
-    background: #fafafa;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    text-align: center;
-    font-size: 20px;
-    font-weight: bold;
+    margin:15px 0;
+    padding:15px;
+    background:#f7f7f7;
+    border:1px solid #bfbfbf;
+    border-radius:6px;
+    text-align:center;
+    font-size:20px;
+    font-weight:bold;
 }
-
 .info {
-    margin-top: 14px;
-    font-size: 12px;
-    color: #555;
-    text-align: center;
+    font-size:12px;
+    color:#555;
+    text-align:center;
+    margin-top:10px;
 }
 </style>
 </head>
-
 <body>
+
 <div class="container">
 <h1>Schusszähler</h1>
 
 <label>Neues Sportgerät</label>
-<input id="newGun" placeholder="z.B. Stgw 57">
-<button class="secondary" onclick="addGun()">Hinzufügen</button>
+<input type="text" id="geraetNeu" placeholder="z.B. Stgw 57/03">
+<button class="secondary" onclick="neuesGeraet()">Sportgerät hinzufügen</button>
 
 <label>Sportgerät auswählen</label>
-<select id="gunSelect" onchange="loadGun()">
+<select id="geraetSelect" onchange="ladeGeraet()">
 <option value="">– auswählen –</option>
 </select>
 
-<label>Startsaldo</label>
-<input type="number" id="startValue" onchange="updateTotal()">
+<label>Startsaldo Schusszahl</label>
+<input type="number" id="startsaldo" oninput="aktualisieren()">
 
-<label>Neuer Eintrag</label>
-<input type="number" id="addValue">
-<button class="primary" onclick="addEntry()">Eintrag hinzufügen</button>
+<label>Neuer Eintrag (Munition)</label>
+<input type="number" id="neuerEintrag">
+<button class="primary" onclick="addEintrag()">Eintrag hinzufügen</button>
 
 <div class="total">
-Gesamt<br>
+Total Schusszahl<br>
 <span id="total">0</span>
 </div>
 
-<button class="secondary" onclick="resetGun()">Neuer Lauf</button>
+<button class="secondary" onclick="laufwechsel()">Neuer Lauf</button>
 <button class="secondary" onclick="exportCSV()">Export CSV</button>
-<button class="danger" onclick="deleteGun()">Sportgerät löschen</button>
+<button class="danger" onclick="geraetLoeschen()">Sportgerät löschen (Neustart)</button>
 
 <div class="info">
-Offlinefähig · Daten nur lokal gespeichert
+Optimiert für Handy · Daten lokal gespeichert
 </div>
 </div>
 
 <script>
-let data = JSON.parse(localStorage.getItem("shots")) || {};
-let currentGun = "";
+let daten = JSON.parse(localStorage.getItem("schusszaehler")) || {};
+let aktuellesGeraet = "";
 
-function save() {
-    localStorage.setItem("shots", JSON.stringify(data));
+function speichern() {
+    localStorage.setItem("schusszaehler", JSON.stringify(daten));
 }
 
-function refreshSelect() {
-    const s = document.getElementById("gunSelect");
-    s.innerHTML = '<option value="">– auswählen –</option>';
-    for (let g in data) {
+function ladeDropdown() {
+    const sel = document.getElementById("geraetSelect");
+    sel.innerHTML = '<option value="">– auswählen –</option>';
+    for (let g in daten) {
         const o = document.createElement("option");
         o.value = g;
-        o.textContent = g;
-        s.appendChild(o);
+        o.text = g;
+        sel.appendChild(o);
     }
 }
 
-function addGun() {
-    const name = document.getElementById("newGun").value.trim();
+function neuesGeraet() {
+    const name = document.getElementById("geraetNeu").value.trim();
     if (!name) return;
-    data[name] = { start: 0, entries: [] };
-    document.getElementById("newGun").value = "";
-    save();
-    refreshSelect();
-    document.getElementById("gunSelect").value = name;
-    loadGun();
+    daten[name] = { startsaldo: 0, eintraege: [] };
+    speichern();
+    document.getElementById("geraetNeu").value = "";
+    ladeDropdown();
+    document.getElementById("geraetSelect").value = name;
+    ladeGeraet();
 }
 
-function loadGun() {
-    currentGun = document.getElementById("gunSelect").value;
-    if (!currentGun) return;
-    document.getElementById("startValue").value = data[currentGun].start;
-    updateTotal();
+function ladeGeraet() {
+    aktuellesGeraet = document.getElementById("geraetSelect").value;
+    if (!aktuellesGeraet) return;
+    document.getElementById("startsaldo").value = daten[aktuellesGeraet].startsaldo;
+    anzeigen();
 }
 
-function updateTotal() {
-    if (!currentGun) return;
-    data[currentGun].start = Number(document.getElementById("startValue").value) || 0;
-    let sum = data[currentGun].start;
-    data[currentGun].entries.forEach(e => sum += e);
-    document.getElementById("total").textContent = sum;
-    save();
+function aktualisieren() {
+    if (!aktuellesGeraet) return;
+    daten[aktuellesGeraet].startsaldo =
+        Number(document.getElementById("startsaldo").value) || 0;
+    anzeigen();
 }
 
-function addEntry() {
-    if (!currentGun) return;
-    const v = Number(document.getElementById("addValue").value);
-    if (v <= 0) return;
-    data[currentGun].entries.push(v);
-    document.getElementById("addValue").value = "";
-    updateTotal();
+function addEintrag() {
+    if (!aktuellesGeraet) return;
+    const wert = Number(document.getElementById("neuerEintrag").value);
+    if (wert <= 0) return;
+
+    daten[aktuellesGeraet].eintraege.push({
+        datum: new Date().toLocaleDateString(),
+        menge: wert
+    });
+
+    document.getElementById("neuerEintrag").value = "";
+    speichern();
+    anzeigen();
 }
 
-function resetGun() {
-    if (!currentGun) return;
+function anzeigen() {
+    const g = daten[aktuellesGeraet];
+    let total = g.startsaldo;
+    g.eintraege.forEach(e => total += e.menge);
+    document.getElementById("total").innerText = total;
+    speichern();
+}
+
+function laufwechsel() {
+    if (!aktuellesGeraet) return;
     if (!confirm("Neuen Lauf starten?")) return;
-    data[currentGun] = { start: 0, entries: [] };
-    document.getElementById("startValue").value = 0;
-    updateTotal();
+    daten[aktuellesGeraet] = { startsaldo: 0, eintraege: [] };
+    document.getElementById("startsaldo").value = 0;
+    anzeigen();
 }
 
-function deleteGun() {
-    if (!currentGun) return;
-    if (!confirm("Sportgerät wirklich löschen?")) return;
-    delete data[currentGun];
-    currentGun = "";
-    save();
-    refreshSelect();
-    document.getElementById("total").textContent = "0";
+function geraetLoeschen() {
+    if (!aktuellesGeraet) return;
+    if (!confirm("Sportgerät wirklich komplett löschen?")) return;
+    delete daten[aktuellesGeraet];
+    aktuellesGeraet = "";
+    speichern();
+    ladeDropdown();
+    document.getElementById("startsaldo").value = "";
+    document.getElementById("total").innerText = "0";
 }
 
 function exportCSV() {
-    if (!currentGun) return;
-    let csv = "Eintrag\n";
-    data[currentGun].entries.forEach(e => csv += e + "\n");
+    if (!aktuellesGeraet) return;
+    let csv = "Datum;Menge\n";
+    daten[aktuellesGeraet].eintraege.forEach(e => {
+        csv += `${e.datum};${e.menge}\n`;
+    });
     const blob = new Blob([csv], { type: "text/csv" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = currentGun + "_schussliste.csv";
+    a.download = aktuellesGeraet + "_Schussliste.csv";
     a.click();
 }
 
-window.onload = refreshSelect;
+window.onload = ladeDropdown;
 </script>
+
 </body>
 </html>
